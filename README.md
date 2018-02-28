@@ -2,6 +2,7 @@
 this is a simple and easy to use network framework library
 
 第一步：
+
 通过HttpConfig配置BaseUrl,code,message
 
       HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
@@ -29,7 +30,9 @@ this is a simple and easy to use network framework library
         HttpHelper.DEFAULT.config(getApplication(), config);
 
        
+
 第二步：
+
 传入url与参数map并执行即可完成网络请求。
 
         HttpHelper.DEFAULT.execute(new HttpHelper.Request<Object>(url, map) {
