@@ -3,11 +3,11 @@ this is a simple and easy to use network framework library
 
 第一步：
 通过HttpConfig配置BaseUrl,code,message
-        
-        HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
+
+      HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
             @Override
             public String getBaseUrl() {
-                return "http://www.kuaidi100.com/";
+                return "baseUrl";
             }
 
             @Override
@@ -27,11 +27,12 @@ this is a simple and easy to use network framework library
         };
 
         HttpHelper.DEFAULT.config(getApplication(), config);
+
        
 第二步：
 传入url与参数map并执行即可完成网络请求。
 
-   HttpHelper.DEFAULT.execute(new HttpHelper.Request<Object>(url, map) {
+        HttpHelper.DEFAULT.execute(new HttpHelper.Request<Object>(url, map) {
             @Override
             public void onSuccess(Object reslut) {
 
