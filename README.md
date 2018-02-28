@@ -29,7 +29,6 @@ this is a simple and easy to use network framework library
         HttpHelper.DEFAULT.config(getApplication(), config);
 
        
-
 第二步：
 传入url与参数map并执行即可完成网络请求。
 
