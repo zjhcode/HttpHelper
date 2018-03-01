@@ -19,8 +19,9 @@ implementation 'com.github.zjhcode:HttpHelper:0.0.1'
 ```
 
 # 权限
+
+在AndroidManifest中添加如下权限<br>
 ```
-在AndroidManifest中添加如下权限
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 ```
