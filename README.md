@@ -20,7 +20,7 @@ implementation 'com.github.zjhcode:HttpHelper:0.0.1'
 
 # 使用
 
-通过HttpConfig配置HttpHelper
+通过HttpConfig配置HttpHelper<br>
 建议在Application中进行配置：
 ```
 HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
