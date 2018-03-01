@@ -1,44 +1,62 @@
 # HttpHelper
 this is a simple and easy to use network framework library
 
-第一步：
+# 引用
 
-通过HttpConfig配置BaseUrl,code,message
+在工程的build.gradle中添加
+```
+allprojects {
+    repositories {
+        ...
+        maven { url 'https://jitpack.io' }
+    }
+}
+```
 
-      HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
-            @Override
-            public String getBaseUrl() {
-                return "baseUrl";
-            }
+在module的build.gradle中添加
+implementation 'com.github.zjhcode:HttpHelper:0.0.1'
 
-            @Override
-            public String getCodeKey() {
-                return "status";
-            }
+# 使用
 
-            @Override
-            public String getMsgKey() {
-                return "message";
-            }
+通过HttpConfig配置HttpHelper
 
-            @Override
-            public int getCodeSuc() {
-                return 200;
-            }
-        };
+baseUrl:设置retrofit的baseUrl
+codeKey:请求返回的json中code字段的名称
+msgkey:请求返回的json中message字段的名称
+codeSuc:code正确的判定值
 
-        HttpHelper.DEFAULT.config(getApplication(), config);
+建议写在Application中进行配置：
+```
+HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
+    @Override
+    public String getBaseUrl() {
+        return "http://www.kuaidi100.com/";
+    }
 
-       
+    @Override
+    public String getCodeKey() {
+        return "status";
+    }
 
-第二步：
+    @Override
+    public String getMsgKey() {
+        return "message";
+    }
 
-传入url与参数map并执行即可完成网络请求。
+    @Override
+    public int getCodeSuc() {
+        return 200;
+    }
+};
 
-        HttpHelper.DEFAULT.execute(new HttpHelper.Request<Object>(url, map) {
-            @Override
-            public void onSuccess(Object reslut) {
+HttpHelper.DEFAULT.config(getApplication(), config);
+```
+传入接口的url和参数map发起请求
+```
+HttpHelper.DEFAULT.execute(new HttpHelper.Request<Object>(url, map) {
+    @Override
+    public void onSuccess(Object reslut) {
 
-            }
-        });
-
+    }
+});
+```
