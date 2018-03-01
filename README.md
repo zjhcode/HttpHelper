@@ -21,32 +21,30 @@ implementation 'com.github.zjhcode:HttpHelper:0.0.1'
 # 使用
 
 通过HttpConfig配置HttpHelper
-
-baseUrl:设置retrofit的baseUrl<br> 
-codeKey:请求返回的json中code字段的名称<br> 
-msgkey:请求返回的json中message字段的名称<br> 
-codeSuc:code正确的判定值<br> 
-
-建议写在Application中进行配置：
+建议在Application中进行配置：
 ```
 HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
     @Override
     public String getBaseUrl() {
+        //配置retrofit的baseUrl
         return "http://www.kuaidi100.com/";
     }
 
     @Override
     public String getCodeKey() {
-        return "status";
+        //返回的json中code的字段名
+        return "code";
     }
 
     @Override
     public String getMsgKey() {
-        return "message";
+        //返回的json中msg的字段名
+        return "msg";
     }
 
     @Override
     public int getCodeSuc() {
+        //code成功的判定值
         return 200;
     }
 };
