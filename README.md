@@ -18,6 +18,13 @@ allprojects {
 implementation 'com.github.zjhcode:HttpHelper:0.0.1'
 ```
 
+# 权限
+```
+在AndroidManifest中添加如下权限
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+```
+
 # 使用
 
 通过HttpConfig配置HttpHelper<br>
@@ -25,27 +32,33 @@ implementation 'com.github.zjhcode:HttpHelper:0.0.1'
 ```
 HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
     @Override
-    public String getBaseUrl() {
-        //配置retrofit的baseUrl
-        return "http://www.kuaidi100.com/";
+    public String baseUrl() {
+        //配置retrofit中的baseUrl
+        return "baseUrl";
     }
 
     @Override
-    public String getCodeKey() {
-        //返回的json中code的字段名
+    public String codeFieldName() {
+        //code的字段名
         return "code";
     }
 
     @Override
-    public String getMsgKey() {
-        //返回的json中msg的字段名
+    public int codeSuc() {
+        //code成功的判定，boolean类型可以返回1
+        return 200;
+    }
+
+    @Override
+    public String msgFieldName() {
+        //msg的字段名
         return "msg";
     }
 
     @Override
-    public int getCodeSuc() {
-        //code成功的判定值
-        return 200;
+    public String dataFieldName() {
+        //data的字段名
+        return "data";
     }
 };
 
