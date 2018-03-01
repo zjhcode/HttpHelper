@@ -17,23 +17,33 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
             @Override
-            public String getBaseUrl() {
-                return "http://www.kuaidi100.com/";
+            public String baseUrl() {
+                //配置retrofit中的baseUrl
+                return "baseUrl";
             }
 
             @Override
-            public String getCodeKey() {
-                return "status";
+            public String codeFieldName() {
+                //code的字段名
+                return "code";
             }
 
             @Override
-            public String getMsgKey() {
-                return "message";
-            }
-
-            @Override
-            public int getCodeSuc() {
+            public int codeSuc() {
+                //code成功的判定，boolean类型可以返回1
                 return 200;
+            }
+
+            @Override
+            public String msgFieldName() {
+                //msg的字段名
+                return "msg";
+            }
+
+            @Override
+            public String dataFieldName() {
+                //data的字段名
+                return "data";
             }
         };
 
@@ -41,10 +51,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClick(View view) {
-        String url = "query";
+        String url = "url";
         Map<String, String> map = new HashMap<>();
-        map.put("type", "ems");
-        map.put("postid", "1115983271809");
+
         HttpHelper.DEFAULT.execute(new HttpHelper.Request<Object>(url, map) {
             @Override
             public void onSuccess(Object reslut) {

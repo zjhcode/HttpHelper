@@ -90,17 +90,17 @@ public enum HttpHelper {
 
         if (USE_INTERCEPTOR) {
             if (encoded) {
-                builder.addInterceptor(httpConfig.getEncodedInterceptor());
+                builder.addInterceptor(httpConfig.encodedInterceptor());
 
             } else {
-                builder.addInterceptor(httpConfig.getDefaultInterceptor());
+                builder.addInterceptor(httpConfig.defaultInterceptor());
 
             }
         }
 
         retrofit = retrofit.newBuilder()
                 .client(builder.build())
-                .baseUrl(httpConfig.getBaseUrl())
+                .baseUrl(httpConfig.baseUrl())
                 .build();
     }
 
@@ -111,6 +111,7 @@ public enum HttpHelper {
         return netService;
     }
 
+    @SuppressWarnings("unchecked")
     public <R> void execute(final Request<R> request) {
         if (!NetworkUtils.isConnected()) {
             ToastUtils.showLong("网络连接失败,请检查网络连接");
@@ -127,15 +128,29 @@ public enum HttpHelper {
                     public R apply(String json) throws Exception {
                         LogUtils.dTag("debug", "map:" + Thread.currentThread().getName());
                         JSONObject jsonObject = new JSONObject(json);
-                        int code = jsonObject.getInt(config == null ? "code" : config.getCodeKey());
-                        String msg = jsonObject.getString(config == null ? "msg" : config.getMsgKey());
-                        String dataJson = jsonObject.getString("data");
+                        String codeFieldName = (config == null ? "code" : config.codeFieldName());
+                        int code;
+                        String codeStr = jsonObject.getString(codeFieldName);
+                        //对boolean类型的兼容
+                        switch (codeStr) {
+                            case "true":
+                                code = 1;
+                                break;
+                            case "false":
+                                code = 0;
+                                break;
+                            default:
+                                code = jsonObject.getInt(codeFieldName);
+                        }
+
+                        String msg = jsonObject.getString(config == null ? "msg" : config.msgFieldName());
+                        String dataJson = jsonObject.getString(config == null ? "msg" : config.dataFieldName());
                         //对于后台数据格式容错的判断
                         if (TextUtils.isEmpty(dataJson) || dataJson.equals("null")) {
                             dataJson = "";
                         }
                         String dataTag = encoded ? "data decode" : "data default";
-                        if (code == (config == null ? 200 : config.getCodeSuc())) {
+                        if (code == (config == null ? 200 : config.codeSuc())) {
                             if (encoded) {
                                 if (!TextUtils.isEmpty(dataJson)) {
                                     //解密
@@ -189,19 +204,21 @@ public enum HttpHelper {
 
     public static abstract class HttpConfig {
 
-        public abstract String getBaseUrl();
+        public abstract String baseUrl();
 
-        public abstract String getCodeKey();
+        public abstract String codeFieldName();
 
-        public abstract String getMsgKey();
+        public abstract int codeSuc();
 
-        public abstract int getCodeSuc();
+        public abstract String msgFieldName();
+
+        public abstract String dataFieldName();
 
         public String decode(String dataJson) {
             return dataJson;
         }
 
-        public Interceptor getDefaultInterceptor() {
+        public Interceptor defaultInterceptor() {
             return new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -210,7 +227,7 @@ public enum HttpHelper {
             };
         }
 
-        public Interceptor getEncodedInterceptor() {
+        public Interceptor encodedInterceptor() {
             return new Interceptor() {
                 @Override
                 public Response intercept(Chain chain) throws IOException {
@@ -220,6 +237,7 @@ public enum HttpHelper {
         }
     }
 
+    @SuppressWarnings(value = {"path", "cast"})
     public static abstract class Request<R> {
         protected String url;
         protected Map<String, String> paramMap;
