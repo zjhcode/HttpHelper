@@ -22,10 +22,10 @@ implementation 'com.github.zjhcode:HttpHelper:0.0.1'
 
 通过HttpConfig配置HttpHelper
 
-baseUrl:设置retrofit的baseUrl
-codeKey:请求返回的json中code字段的名称
-msgkey:请求返回的json中message字段的名称
-codeSuc:code正确的判定值
+baseUrl:设置retrofit的baseUrl\<br> 
+codeKey:请求返回的json中code字段的名称\<br> 
+msgkey:请求返回的json中message字段的名称\<br> 
+codeSuc:code正确的判定值\<br> 
 
 建议写在Application中进行配置：
 ```
