@@ -111,8 +111,19 @@ public enum HttpHelper {
         return netService;
     }
 
-    @SuppressWarnings("unchecked")
     public <R> void execute(final Request<R> request) {
+        execute(request, false);
+    }
+
+    /**
+     * 执行请求
+     *
+     * @param request
+     * @param parseOverall 是否解析并返回整个json实体
+     * @param <R>
+     */
+    @SuppressWarnings("unchecked")
+    public <R> void execute(final Request<R> request, final boolean parseOverall) {
         if (!NetworkUtils.isConnected()) {
             ToastUtils.showLong("网络连接失败,请检查网络连接");
             return;
@@ -161,15 +172,21 @@ public enum HttpHelper {
                             String dataLog = String.format("url:\n%s\nparams:%s\n%s:\n%s", retrofit.baseUrl().toString() + request.url, request.paramMap.toString(), dataTag, dataJson);
                             LogUtils.dTag("OkHttp", dataLog);
 
+                            //是否解析全部json数据
+                            if (parseOverall) {
+                                dataJson = json;
+                            }
+
                             Type type = request.getClass().getGenericSuperclass();
                             if (type instanceof ParameterizedType) {
                                 Type paramType = ((ParameterizedType) type).getActualTypeArguments()[0];
-                                if (paramType.equals(Object.class) || paramType.equals(String.class)) {
+                                if (paramType.equals(String.class)) {
                                     return (R) dataJson;
                                 }
 
                                 return new Gson().fromJson(dataJson, paramType);
                             }
+
                             return (R) dataJson;
                         }
 
