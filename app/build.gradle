@@ -22,4 +22,5 @@ dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:26.1.0'
     compile project(':httphelper')
+    implementation 'com.alibaba:fastjson:1.1.68.android'
 }

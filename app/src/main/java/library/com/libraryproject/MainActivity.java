@@ -2,7 +2,9 @@ package library.com.libraryproject;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -15,11 +17,12 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
             @Override
             public String baseUrl() {
                 //配置retrofit中的baseUrl
-                return "baseUrl";
+                return "http://api.douban.com/v2/movie/subject/";
             }
 
             @Override
@@ -31,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public int codeSuc() {
                 //code成功的判定，boolean类型可以返回1
-                return 200;
+                return 0;
             }
 
             @Override
@@ -48,17 +51,27 @@ public class MainActivity extends AppCompatActivity {
         };
 
         HttpHelper.DEFAULT.config(getApplication(), config);
+
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("apikey", "0b2bdeda43b5688921839c8ecb20399b");
+        HttpHelper.DEFAULT.execute(new HttpHelper.Request<DataBean>("26004132", paramMap) {
+            @Override
+            public void onSuccess(DataBean reslut) {
+                String alt = reslut.getAlt();
+                Toast.makeText(MainActivity.this, alt, Toast.LENGTH_LONG).show();
+            }
+        }, true);
     }
 
     public void onClick(View view) {
-        String url = "url";
-        Map<String, String> map = new HashMap<>();
-
-        HttpHelper.DEFAULT.execute(new HttpHelper.Request<Object>(url, map) {
+        Map<String, String> paramMap = new HashMap<>();
+        paramMap.put("apikey", "0b2bdeda43b5688921839c8ecb20399b");
+        HttpHelper.DEFAULT.execute(new HttpHelper.Request<DataBean>("26004132", paramMap, HttpHelper.Request.RequestType.GET) {
             @Override
-            public void onSuccess(Object reslut) {
-
+            public void onSuccess(DataBean reslut) {
+                String alt = reslut.getAlt();
+                Toast.makeText(MainActivity.this, alt, Toast.LENGTH_LONG).show();
             }
-        });
+        }, true);
     }
 }

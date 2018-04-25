@@ -4,13 +4,13 @@ package library.com.httphelper;
 import android.app.Application;
 import android.text.TextUtils;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.NetworkUtils;
+import com.blankj.utilcode.util.ObjectUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.blankj.utilcode.util.Utils;
-import com.google.gson.Gson;
-
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
@@ -29,7 +29,6 @@ import okhttp3.Response;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
-import retrofit2.converter.gson.GsonConverterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
 import retrofit2.http.Body;
 import retrofit2.http.FieldMap;
@@ -79,7 +78,6 @@ public enum HttpHelper {
                 .baseUrl(DEFAULT_BASE_URL)
                 .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(ScalarsConverterFactory.create())
-                .addConverterFactory(GsonConverterFactory.create())
                 .build();
     }
 
@@ -124,13 +122,18 @@ public enum HttpHelper {
      */
     @SuppressWarnings("unchecked")
     public <R> void execute(final Request<R> request, final boolean parseOverall) {
+        if (ObjectUtils.isEmpty(config)) {
+            LogUtils.eTag("HttpHelper", "u must use config() first!");
+            return;
+        }
+
         if (!NetworkUtils.isConnected()) {
             ToastUtils.showLong("网络连接失败,请检查网络连接");
             return;
         }
 
         String executeLog = String.format("request execute\nurl:\n%s\nparams:%s", retrofit.baseUrl().toString() + request.url, request.paramMap.toString());
-        LogUtils.dTag("OkHttp", executeLog);
+        LogUtils.dTag("HttpHelper", executeLog);
 
         request.buildRequest(getNetService())
                 .subscribeOn(Schedulers.io())
@@ -138,12 +141,17 @@ public enum HttpHelper {
                     @Override
                     public R apply(String json) throws Exception {
                         LogUtils.dTag("debug", "map:" + Thread.currentThread().getName());
-                        JSONObject jsonObject = new JSONObject(json);
-                        String codeFieldName = (config == null ? "code" : config.codeFieldName());
+                        JSONObject jsonObject = JSON.parseObject(json);
                         int code;
-                        String codeStr = jsonObject.getString(codeFieldName);
+                        String msg;
+                        String dataJson;
+
+                        String codeField = jsonObject.getString(config.codeFieldName());
+                        if (ObjectUtils.isEmpty(codeField)) {
+                            codeField = "";
+                        }
                         //对boolean类型的兼容
-                        switch (codeStr) {
+                        switch (codeField) {
                             case "true":
                                 code = 1;
                                 break;
@@ -151,31 +159,33 @@ public enum HttpHelper {
                                 code = 0;
                                 break;
                             default:
-                                code = jsonObject.getInt(codeFieldName);
+                                code = jsonObject.getIntValue(config.codeFieldName());
                         }
 
-                        String msg = jsonObject.getString(config == null ? "msg" : config.msgFieldName());
-                        String dataJson = jsonObject.getString(config == null ? "msg" : config.dataFieldName());
-                        //对于后台数据格式容错的判断
-                        if (TextUtils.isEmpty(dataJson) || dataJson.equals("null")) {
-                            dataJson = "";
+                        msg = jsonObject.getString(config.msgFieldName());
+
+                        //是否解析全部json数据
+                        if (parseOverall) {
+                            dataJson = json;
+                        } else {
+                            dataJson = jsonObject.getString(config.dataFieldName());
+                            //对于后台数据格式容错的判断
+                            if (TextUtils.isEmpty(dataJson) || dataJson.equals("null")) {
+                                dataJson = "";
+                            }
                         }
+
                         String dataTag = encoded ? "data decode" : "data default";
-                        if (code == (config == null ? 200 : config.codeSuc())) {
+                        if (code == config.codeSuc()) {
                             if (encoded) {
                                 if (!TextUtils.isEmpty(dataJson)) {
                                     //解密
-                                    dataJson = (config == null ? dataJson : config.decode(dataJson));
+                                    dataJson = config.decode(dataJson);
                                 }
                             }
 
                             String dataLog = String.format("url:\n%s\nparams:%s\n%s:\n%s", retrofit.baseUrl().toString() + request.url, request.paramMap.toString(), dataTag, dataJson);
-                            LogUtils.dTag("OkHttp", dataLog);
-
-                            //是否解析全部json数据
-                            if (parseOverall) {
-                                dataJson = json;
-                            }
+                            LogUtils.dTag("HttpHelper", dataLog);
 
                             Type type = request.getClass().getGenericSuperclass();
                             if (type instanceof ParameterizedType) {
@@ -184,7 +194,7 @@ public enum HttpHelper {
                                     return (R) dataJson;
                                 }
 
-                                return new Gson().fromJson(dataJson, paramType);
+                                return JSON.parseObject(dataJson, paramType);
                             }
 
                             return (R) dataJson;
@@ -212,7 +222,7 @@ public enum HttpHelper {
                         }
 
                         String errLog = String.format("url:\n%s\nparams:%s\nerr:\ncode:%s msg:%s", retrofit.baseUrl().toString() + request.url, request.paramMap.toString(), String.valueOf(code), msg);
-                        LogUtils.dTag("OkHttp", errLog);
+                        LogUtils.dTag("HttpHelper", errLog);
 
                         request.onError(CODE_REQUEST_THROWABLE, throwable.getMessage());
                     }
