@@ -15,7 +15,7 @@ allprojects {
 
 在module的build.gradle中添加
 ```
-implementation 'com.github.zjhcode:HttpHelper:0.0.2'
+implementation 'com.github.zjhcode:HttpHelper:0.0.4'
 ```
 
 # 权限
