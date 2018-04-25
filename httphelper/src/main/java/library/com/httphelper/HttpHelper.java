@@ -109,7 +109,7 @@ public enum HttpHelper {
         return netService;
     }
 
-    public <R> void execute(final Request<R> request) {
+    public <D> void execute(final Request<D> request) {
         execute(request, false);
     }
 
@@ -118,10 +118,10 @@ public enum HttpHelper {
      *
      * @param request
      * @param parseOverall 是否解析并返回整个json实体
-     * @param <R>
+     * @param <D>
      */
     @SuppressWarnings("unchecked")
-    public <R> void execute(final Request<R> request, final boolean parseOverall) {
+    public <D> void execute(final Request<D> request, final boolean parseOverall) {
         if (ObjectUtils.isEmpty(config)) {
             LogUtils.eTag("HttpHelper", "u must use config() first!");
             return;
@@ -137,9 +137,9 @@ public enum HttpHelper {
 
         request.buildRequest(getNetService())
                 .subscribeOn(Schedulers.io())
-                .map(new Function<String, R>() {
+                .map(new Function<String, D>() {
                     @Override
-                    public R apply(String json) throws Exception {
+                    public D apply(String json) throws Exception {
                         LogUtils.dTag("debug", "map:" + Thread.currentThread().getName());
                         JSONObject jsonObject = JSON.parseObject(json);
                         int code;
@@ -191,23 +191,23 @@ public enum HttpHelper {
                             if (type instanceof ParameterizedType) {
                                 Type paramType = ((ParameterizedType) type).getActualTypeArguments()[0];
                                 if (paramType.equals(String.class)) {
-                                    return (R) dataJson;
+                                    return (D) dataJson;
                                 }
 
                                 return JSON.parseObject(dataJson, paramType);
                             }
 
-                            return (R) dataJson;
+                            return (D) dataJson;
                         }
 
                         throw new NetException(code, msg);
                     }
                 })
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Consumer<R>() {
+                .subscribe(new Consumer<D>() {
                     @Override
-                    public void accept(R result) throws Exception {
-                        request.onSuccess(result);
+                    public void accept(D data) throws Exception {
+                        request.onSuccess(data);
                     }
                 }, new Consumer<Throwable>() {
                     @Override
@@ -265,7 +265,7 @@ public enum HttpHelper {
     }
 
     @SuppressWarnings(value = {"path", "cast"})
-    public static abstract class Request<R> {
+    public static abstract class Request<D> {
         protected String url;
         protected Map<String, String> paramMap;
         protected RequestType requestType;
@@ -331,7 +331,7 @@ public enum HttpHelper {
             return null;
         }
 
-        public abstract void onSuccess(R reslut);
+        public abstract void onSuccess(D data);
 
         public void onError(int code, String err) {
 
