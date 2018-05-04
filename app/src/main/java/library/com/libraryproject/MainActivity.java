@@ -3,8 +3,8 @@ package library.com.libraryproject;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
@@ -14,11 +14,15 @@ import java.util.Map;
 import library.com.httphelper.HttpHelper;
 
 public class MainActivity extends AppCompatActivity {
+    private TextView progressTextView;
+    private Runnable progressRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        progressTextView = findViewById(R.id.progress_tv);
 
         HttpHelper.HttpConfig config = new HttpHelper.HttpConfig() {
             @Override
@@ -69,19 +73,36 @@ public class MainActivity extends AppCompatActivity {
             }
         }, true);
 
-        String downloadUrl = "https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1525434778095&di=1088e524ff80610eae30cbc41608bc28&imgtype=0&src=http%3A%2F%2Fimgsrc.baidu.com%2Fimgad%2Fpic%2Fitem%2Fb21c8701a18b87d6232299000d0828381f30fd48.jpg";
+        String downloadUrl = "http://115.231.191.148/sqdd.myapp.com/myapp/qqteam/tim/down/tim.apk?mkey=5aec0f15278da642&f=4eae&c=0&p=.apk";
 
-        File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/downloadImg.jpg");
+        File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) + "/zzm.apk");
 
         HttpHelper.DEFAULT.download(new HttpHelper.Request<File>(downloadUrl, file) {
             @Override
-            public void onSuccess(File data) {
+            public void onDownloadStart(final long fileSize) {
+                super.onDownloadStart(fileSize);
 
+                progressTextView.post(progressRunnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        progressTextView.setText(String.format("%.2f %%", 100 * ((double) file.length()) / fileSize));
+
+                        progressTextView.postDelayed(this, 200);
+                    }
+                });
+            }
+
+            @Override
+            public void onSuccess(File data) {
+                Toast.makeText(MainActivity.this, "下载完成,文件位于：" + data.getAbsolutePath(), Toast.LENGTH_LONG).show();
+                progressTextView.removeCallbacks(progressRunnable);
+                progressTextView.setText("100.00%");
             }
 
             @Override
             public void onError(int code, String err) {
                 super.onError(code, err);
+                progressTextView.removeCallbacks(progressRunnable);
             }
         });
     }

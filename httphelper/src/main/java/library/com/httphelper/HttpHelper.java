@@ -31,8 +31,6 @@ import okhttp3.OkHttpClient;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
-import retrofit2.Call;
-import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
@@ -246,6 +244,8 @@ public enum HttpHelper {
                 .map(new Function<ResponseBody, File>() {
                     @Override
                     public File apply(ResponseBody responseBody) throws Exception {
+                        request.onDownloadStart(responseBody.contentLength());
+
                         if (FileIOUtils.writeFileFromIS(request.file, responseBody.byteStream())) {
                             return request.file;
                         }
@@ -257,7 +257,7 @@ public enum HttpHelper {
                 .subscribe(new Consumer<File>() {
                     @Override
                     public void accept(File file) throws Exception {
-                       request.onSuccess(file);
+                        request.onSuccess(file);
                     }
                 }, new Consumer<Throwable>() {
                     @Override
@@ -382,6 +382,10 @@ public enum HttpHelper {
 
         public Observable customRequest() {
             return null;
+        }
+
+        public void onDownloadStart(long fileSize) {
+
         }
 
         public abstract void onSuccess(D data);
