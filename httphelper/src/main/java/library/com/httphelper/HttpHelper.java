@@ -1,17 +1,20 @@
 package library.com.httphelper;
 
 
+import android.annotation.SuppressLint;
 import android.app.Application;
 import android.text.TextUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.LogUtils;
 import com.blankj.utilcode.util.NetworkUtils;
 import com.blankj.utilcode.util.ObjectUtils;
 import com.blankj.utilcode.util.ToastUtils;
 import com.blankj.utilcode.util.Utils;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -26,7 +29,10 @@ import io.reactivex.schedulers.Schedulers;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
+import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
+import retrofit2.Call;
+import retrofit2.Callback;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.scalars.ScalarsConverterFactory;
@@ -37,6 +43,8 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.QueryMap;
+import retrofit2.http.Streaming;
+import retrofit2.http.Url;
 
 /**
  * 网络框架类
@@ -59,6 +67,7 @@ public enum HttpHelper {
     //是否使用拦截器
     private static final boolean USE_INTERCEPTOR = true;
     private static final int CODE_REQUEST_THROWABLE = -1;
+    private static final int CODE_CUSTOM_ERROR = -100;
     //超时
     private static final int TIMEOUT = 60;
     private static final String DEFAULT_BASE_URL = "http://default.com/";
@@ -120,6 +129,7 @@ public enum HttpHelper {
      * @param parseOverall 是否解析并返回整个json实体
      * @param <D>
      */
+    @SuppressLint("CheckResult")
     @SuppressWarnings("unchecked")
     public <D> void execute(final Request<D> request, final boolean parseOverall) {
         if (ObjectUtils.isEmpty(config)) {
@@ -224,7 +234,44 @@ public enum HttpHelper {
                         String errLog = String.format("url:\n%s\nparams:%s\nerr:\ncode:%s msg:%s", retrofit.baseUrl().toString() + request.url, request.paramMap.toString(), String.valueOf(code), msg);
                         LogUtils.dTag("HttpHelper", errLog);
 
-                        request.onError(CODE_REQUEST_THROWABLE, throwable.getMessage());
+                        request.onError(code, throwable.getMessage());
+                    }
+                });
+    }
+
+    @SuppressLint("CheckResult")
+    public void download(final Request<File> request) {
+        getNetService().download(request.url)
+                .subscribeOn(Schedulers.io())
+                .map(new Function<ResponseBody, File>() {
+                    @Override
+                    public File apply(ResponseBody responseBody) throws Exception {
+                        if (FileIOUtils.writeFileFromIS(request.file, responseBody.byteStream())) {
+                            return request.file;
+                        }
+
+                        throw new NetException(CODE_CUSTOM_ERROR, "下载失败");
+                    }
+                })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(new Consumer<File>() {
+                    @Override
+                    public void accept(File file) throws Exception {
+                       request.onSuccess(file);
+                    }
+                }, new Consumer<Throwable>() {
+                    @Override
+                    public void accept(Throwable throwable) throws Exception {
+                        int code;
+                        String msg = throwable.getMessage();
+                        if (throwable instanceof NetException) {
+                            NetException netException = (NetException) throwable;
+                            code = netException.code;
+                        } else {
+                            code = CODE_REQUEST_THROWABLE;
+                        }
+
+                        request.onError(code, throwable.getMessage());
                     }
                 });
     }
@@ -268,6 +315,7 @@ public enum HttpHelper {
     public static abstract class Request<D> {
         protected String url;
         protected Map<String, String> paramMap;
+        protected File file;
         protected RequestType requestType;
         protected ParamType paramType;
 
@@ -276,6 +324,11 @@ public enum HttpHelper {
             this.paramMap = map;
             this.requestType = RequestType.POST;
             this.paramType = ParamType.NORMAL;
+        }
+
+        public Request(String url, File file) {
+            this.url = url;
+            this.file = file;
         }
 
         public Request(String url, Map map, RequestType requestType) {
@@ -383,5 +436,9 @@ public enum HttpHelper {
 
         @POST("{url}")
         Observable<String> postBody(@Path(value = "url", encoded = true) String url, @Body Map<String, String> map);
+
+        @Streaming
+        @GET
+        Observable<ResponseBody> download(@Url String url);
     }
 }
